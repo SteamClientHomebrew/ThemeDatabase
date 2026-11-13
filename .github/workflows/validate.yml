@@ -1,0 +1,41 @@
+name: Validate Themes
+
+on:
+    pull_request:
+        paths:
+            - metadata.json
+
+permissions:
+    contents: read
+
+jobs:
+    validate:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Validate metadata.json
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  jq -e '.themes | type == "array" and length > 0' metadata.json > /dev/null
+                  jq -e 'all(.themes[]; (.owner | type == "string") and (.repo | type == "string"))' metadata.json > /dev/null
+
+                  duplicates=$(jq -r '[.themes[] | "\(.owner)/\(.repo)" | ascii_downcase] | group_by(.) | map(select(length > 1) | .[0]) | .[]' metadata.json)
+                  if [ -n "$duplicates" ]; then
+                    echo "Duplicate entries:"
+                    echo "$duplicates"
+                    exit 1
+                  fi
+
+                  failed=0
+                  while read -r entry; do
+                    if ! gh api "repos/$entry/contents/skin.json" > /dev/null 2>&1; then
+                      echo "::error::$entry has no skin.json at its root"
+                      failed=1
+                    fi
+                  done < <(jq -r '.themes[] | select(.disabled != true) | "\(.owner)/\(.repo)"' metadata.json)
+
+                  exit $failed

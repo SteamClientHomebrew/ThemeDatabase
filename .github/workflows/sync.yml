@@ -1,0 +1,35 @@
+name: Sync Themes
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - metadata.json
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: sync-themes
+    cancel-in-progress: false
+
+jobs:
+    sync:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Sync to steambrew.app
+              env:
+                  ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+              run: |
+                  payload=$(jq -c '{action: "sync", themes: .themes}' metadata.json)
+                  curl --silent --show-error --fail-with-body --max-time 120 \
+                    -X POST https://steambrew.app/api/admin/themes \
+                    -H "Authorization: Bearer $ADMIN_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    -d "$payload" | jq .
