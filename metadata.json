@@ -142,6 +142,10 @@
         { 
             "owner": "Blade04208", 
             "repo": "xbox360-blades" 
+        },
+        {
+            "owner": "Blackhagwag",
+            "repo": "PlayStation-5-Theme"
         }
     ]
 }
