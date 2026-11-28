@@ -142,6 +142,12 @@
         { 
             "owner": "Blade04208", 
             "repo": "xbox360-blades" 
+        },
+       
+        {
+            "owner": "vladazaza550-bot",
+            "repo": "HaveFun_gif"
         }
+ 
     ]
 }
